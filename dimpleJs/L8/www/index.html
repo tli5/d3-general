@@ -134,6 +134,8 @@
 
             circles.enter()
                   .append('circle')
+                  .transition()
+                  .duration(500)
                   .attr('cx', function(d){ return d.values['x']; })
                   .attr('cy', function(d){ return d.values['y']; })
                   .attr('r', function(d){ return radius(d.values['attendance']); });
@@ -149,6 +151,8 @@
             };
 
             svg.selectAll('path')
+                .transition()
+                .duration(500)
                 .style('fill', update_countries)
                 .style('stroke', update_countries);
           }
@@ -165,10 +169,13 @@
             let i = 0;
 
             return function() {
-              update(years[i++]);
+              update(years[i++ % years.length]);
+              
+              /*
               if (i >= years.length) {
                 clearInterval(year_interval);
               }
+              */
             };
           })(), 1000);
         }
