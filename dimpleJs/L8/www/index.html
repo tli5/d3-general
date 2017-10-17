@@ -13,6 +13,16 @@
         stroke-width: 0.7;
         opacity: 0.7;
       }
+      div.years_buttons {
+        position: fixed;
+        top: 5px;
+        left: 50px;
+      }
+      div.years_buttons div {
+        background-color: rgb(251, 201, 127);
+        padding: 3px;
+        margin: 7px;
+      }
     </style>
     <script type="text/javascript">  
       function draw(geo_data) {
@@ -158,8 +168,10 @@
           }
 
           let years = [];
+          let yearStart = 1930; //1930;
+          let yearEnd = 2015;
 
-          for (let i = 1930; i < 2015; i += 4) {
+          for (let i = yearStart; i < yearEnd; i += 4) {
             if (i !== 1942 && i !== 1946) {
               years.push(i);
             }
@@ -169,13 +181,40 @@
             let i = 0;
 
             return function() {
-              update(years[i++ % years.length]);
-              
-              /*
+              //update(years[i++ % years.length]);
+              update(years[i++]);
+
               if (i >= years.length) {
                 clearInterval(year_interval);
+
+                var buttons = d3.select("body")
+                              .append("div")
+                              .attr("class", "years_buttons")
+                              .selectAll("div")
+                              .data(years)
+                              .enter()
+                              .append("div")
+                              .text(function(d){
+                                return d
+                              });
+                
+                buttons.on("click", function(d){
+                  d3.select(".years_buttons")
+                    .selectAll("div")
+                    .transition()
+                    .duration(500)
+                    .style("background", "rgb(251, 201, 126)")
+                    .style("color", "black");
+
+                  d3.select(this)
+                    .transition()
+                    .duration(500)
+                    .style("background", "lightBlue")
+                    .style("color", "white");
+
+                  update(d);
+                });
               }
-              */
             };
           })(), 1000);
         }
