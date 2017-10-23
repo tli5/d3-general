@@ -58,6 +58,17 @@
                     .style('stroke', 'black')
                     .style('stroke-width', 0.5);
         
+        function processHostCountries(home) {
+          var perishedCountries = {
+            "West Germany": "Germany"
+          };
+          var hostCountry = {};
+          hostCountry.exists = !perishedCountries[home];
+          hostCountry.names = !hostCountry.exists? perishedCountries[home] : home.split("/").map(country => country.trim());
+
+          return hostCountry;
+        }
+
         function plot_points(data) {
           function agg_year(leaves) {
             var total = d3.sum(leaves, function(d) {
@@ -83,11 +94,15 @@
                 teams.add(d['team2']);
             });
 
+            var hostCountry = processHostCountries(leaves[0].home);
+
             return {
               'attendance' : total,
               'x' : center_x,
               'y' : center_y,
-              'teams' : teams.values()
+              'teams' : teams.values(),
+              'hostCountry' : hostCountry,
+              'matches' : leaves
             };
           }
 
@@ -97,7 +112,7 @@
                         })
                         .rollup(agg_year)
                         .entries(data);
-          debugger;
+
           let attendance_extent = d3.extent(nested, function(d) {
             return d.values['attendance'];
           });
@@ -135,7 +150,7 @@
             let filtered = nested.filter(function(d){
               return new Date(d['key']).getUTCFullYear() === year;
             });
-
+            
             let circles = svg.selectAll('circle')
                           .data(filtered, key_func);
 
@@ -152,10 +167,24 @@
             let countries = filtered.length == 0? [] : filtered[0].values['teams'];
 
             function update_countries(d){
-              if (countries.indexOf(d.properties.name) != -1) {
-                return "lightBlue";
+              var hostCountry = filtered[0].values['hostCountry'];
+              
+              if (hostCountry.names.indexOf(d.properties.name) != -1)  {
+                if (!hostCountry.exists)
+                {
+                  return "red";
+                } else if (hostCountry.names.length >= 2){
+                  return "orange";
+                } else {
+                  return "black";
+                }
+                
               } else {
-                return "white";
+                if (countries.indexOf(d.properties.name) != -1) {
+                  return "green";
+                } else {
+                  return "lightBlue";
+                }
               }
             };
 
@@ -175,47 +204,34 @@
                 years.push(i);
               }
             }
-            
-            let year_interval = setInterval((function(){
-              let i = 0;
 
-              return function() {
-                //update(years[i++ % years.length]);
-                update(years[i++]);
-
-                if (i >= years.length) {
-                  clearInterval(year_interval);
-
-                  var buttons = d3.select("body")
-                                .append("div")
-                                .attr("class", "years_buttons")
-                                .selectAll("div")
-                                .data(years)
-                                .enter()
-                                .append("div")
-                                .text(function(d){
-                                  return d
-                                });
+            var buttons = d3.select("body")
+                          .append("div")
+                          .attr("class", "years_buttons")
+                          .selectAll("div")
+                          .data(years)
+                          .enter()
+                          .append("div")
+                          .text(function(d){
+                            return d
+                          });
                   
-                  buttons.on("click", function(d){
-                    d3.select(".years_buttons")
-                      .selectAll("div")
-                      .transition()
-                      .duration(500)
-                      .style("background", "rgb(251, 201, 126)")
-                      .style("color", "black");
+            buttons.on("click", function(d){
+              d3.select(".years_buttons")
+                .selectAll("div")
+                .transition()
+                .duration(500)
+                .style("background", "rgb(251, 201, 126)")
+                .style("color", "black");
 
-                    d3.select(this)
-                      .transition()
-                      .duration(500)
-                      .style("background", "lightBlue")
-                      .style("color", "white");
+              d3.select(this)
+                .transition()
+                .duration(500)
+                .style("background", "lightBlue")
+                .style("color", "white");
 
-                    update(d);
-                  });
-                }
-              };
-            })(), 1000);
+              update(d);
+            });
         }
 
         var format = d3.time.format("%d-%m-%Y (%H:%M h)");
