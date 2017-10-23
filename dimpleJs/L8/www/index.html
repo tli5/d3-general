@@ -10,7 +10,7 @@
       }
       circle {
         fill: orange;
-        stroke: green;
+        stroke: royalblue;
         stroke-width: 0.7;
         opacity: 0.7;
       }
@@ -36,7 +36,7 @@
 
         d3.select('body')
           .append('h2')
-          .text('World Cup');
+          .text('World Cup Chronicle');
 
         var svg = d3.select("body")
             .append("svg")
@@ -56,7 +56,7 @@
                     .enter()
                     .append('path')
                     .attr('d', path)
-                    .style('fill', 'rgb(9, 157, 217)')
+                    .style('fill', 'lightblue')
                     .style('stroke', 'white')
                     .style('stroke-width', 0.5);
         
@@ -146,13 +146,15 @@
             });
           
           function update(year) {
-            d3.select('h2')
-              .text('World Cup ' + year);
-
             let filtered = nested.filter(function(d){
               return new Date(d['key']).getUTCFullYear() === year;
             });
-            
+
+            var hostCountry = filtered[0].values['hostCountry'];
+
+            d3.select('h2')
+              .text(hostCountry.names + ' World Cup ' + year);
+
             let circles = svg.selectAll('circle')
                           .data(filtered, key_func);
 
@@ -169,8 +171,6 @@
             let countries = filtered.length == 0? [] : filtered[0].values['teams'];
 
             function update_countries(d){
-              var hostCountry = filtered[0].values['hostCountry'];
-              
               if (hostCountry.names.indexOf(d.properties.name) != -1)  {
                 if (!hostCountry.exists)
                 {
