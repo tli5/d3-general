@@ -66,7 +66,7 @@
           };
           var hostCountry = {};
           hostCountry.exists = !perishedCountries[home];
-          hostCountry.names = !hostCountry.exists? perishedCountries[home] : home.split("/").map(country => country.trim());
+          hostCountry.names = !hostCountry.exists? [perishedCountries[home]] : home.split("/").map(country => country.trim());
 
           return hostCountry;
         }
@@ -104,7 +104,9 @@
               'y' : center_y,
               'teams' : teams.values(),
               'hostCountry' : hostCountry,
-              'matches' : leaves
+              'matches' : leaves.filter(function(row){
+                return row['stage'] === "FINAL ROUND" || row['stage'] === "1/2 FINAL";
+              })
             };
           }
 
@@ -144,7 +146,7 @@
             .attr('r', function(d){
               return radius(d.values['attendance'])
             });
-          
+
           function update(year) {
             let filtered = nested.filter(function(d){
               return new Date(d['key']).getUTCFullYear() === year;
@@ -153,7 +155,7 @@
             var hostCountry = filtered[0].values['hostCountry'];
 
             d3.select('h2')
-              .text(hostCountry.names + ' World Cup ' + year);
+              .text(hostCountry.names.join('/ ') + ' World Cup ' + year);
 
             let circles = svg.selectAll('circle')
                           .data(filtered, key_func);
@@ -170,7 +172,7 @@
 
             let countries = filtered.length == 0? [] : filtered[0].values['teams'];
 
-            function update_countries(d){
+            function update_countries_by_year(d){
               if (hostCountry.names.indexOf(d.properties.name) != -1)  {
                 if (!hostCountry.exists)
                 {
@@ -193,8 +195,8 @@
             svg.selectAll('path')
                 .transition()
                 .duration(500)
-                .style('fill', update_countries)
-                .style('stroke', update_countries);
+                .style('fill', update_countries_by_year)
+                .style('stroke', update_countries_by_year);
           }
 
             let years = [];
@@ -218,12 +220,11 @@
                             return d
                           });
                   
-            buttons.on("click", function(d){
+            buttons.on("click", function(year){
               d3.select(".years_buttons")
                 .selectAll("div")
                 .transition()
                 .duration(500)
-                //.style("background", "rgb(251, 201, 126)")
                 .style("color", "royalBlue");
 
               d3.select(this)
@@ -232,7 +233,61 @@
                 .style("background", "lightBlue")
                 .style("color", "white");
 
-              update(d);
+              var filtered = nested.filter(function(d){
+                return (new Date(d['key']).getUTCFullYear() === year);
+              });
+
+              //console.log(filtered);
+
+              d3.selectAll(".match_buttons")
+                .remove();
+
+              d3.select(this)
+                .selectAll("div")
+                .data(filtered[0].values.matches)
+                .enter()
+                .append("div")
+                .attr("class", "match_buttons")
+                .text(function(row){
+                  return row['stage']
+                })
+                .on("click", function(row){
+                  
+                  function update_countries_by_match(d){
+                    var perishedCountries = {
+                      "West Germany": "Germany"
+                    };
+
+                    var team1 = perishedCountries[row.team1]? perishedCountries[row.team1] : row.team1;
+                    var team2 = perishedCountries[row.team2]? perishedCountries[row.team2] : row.team2;
+                    var home = perishedCountries[row.home]? perishedCountries[row.home] : row.home;
+                    var country = d.properties.name;
+
+                    if (country == team1 || country == team2) {
+                      return "green";
+                    } else {
+                      if (home != country) {
+                        return "lightBlue";
+                      }
+                    }
+                  };
+
+                  // cancel bubbling
+                  if (!e) var e = window.event;
+                  e.cancelBubble = true;
+                  if (e.stopPropagation) e.stopPropagation();
+
+                  svg.selectAll('path')
+                      .transition()
+                      .duration(500)
+                      .style('fill', update_countries_by_match)
+                      .style('stroke', update_countries_by_match);
+
+                  console.log(row);
+                })
+                ;
+
+              update(year);
             });
         }
 
