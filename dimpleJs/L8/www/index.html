@@ -252,15 +252,18 @@
                   return row['stage']
                 })
                 .on("click", function(row){
-                  
-                  function update_countries_by_match(d){
-                    var perishedCountries = {
-                      "West Germany": "Germany"
-                    };
+                  var perishedCountries = {
+                    "West Germany": "Germany"
+                  };
 
-                    var team1 = perishedCountries[row.team1]? perishedCountries[row.team1] : row.team1;
-                    var team2 = perishedCountries[row.team2]? perishedCountries[row.team2] : row.team2;
-                    var home = perishedCountries[row.home]? perishedCountries[row.home] : row.home;
+                  var team1 = perishedCountries[row.team1]? perishedCountries[row.team1] : row.team1;
+                  var team2 = perishedCountries[row.team2]? perishedCountries[row.team2] : row.team2;
+                  var home = perishedCountries[row.home]? perishedCountries[row.home] : row.home;
+
+                  d3.select('h2')
+                    .text(team1 + " vs " + team2 + " at " + row.stadium);
+
+                  function update_countries_by_match(d){
                     var country = d.properties.name;
 
                     if (country == team1 || country == team2) {
